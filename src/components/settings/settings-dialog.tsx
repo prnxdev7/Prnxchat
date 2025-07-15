@@ -9,10 +9,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProfileSettings } from './profile-settings';
 import { AppearanceSettings } from './appearance-settings';
+import { LogoutButton } from '../auth/logout-button';
+import { Separator } from '../ui/separator';
 
 export function SettingsDialog({ children }: { children: React.ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -39,6 +42,10 @@ export function SettingsDialog({ children }: { children: React.ReactNode }) {
                     <AppearanceSettings />
                 </TabsContent>
             </Tabs>
+            <Separator className="my-4" />
+            <DialogFooter>
+                <LogoutButton />
+            </DialogFooter>
         </DialogContent>
         </Dialog>
     );
