@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -14,6 +13,9 @@ import { useAuth } from '@/hooks/use-auth';
 import { MessageList } from './message-list';
 import { MessageForm } from './message-form';
 import { LogoutButton } from '../auth/logout-button';
+import { Shield } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '../ui/button';
 
 // Hardcoded chat ID for this example
 const CHAT_ID = 'general';
@@ -29,6 +31,7 @@ export interface Message {
 export function ChatView() {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
+  const isAdmin = user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
   useEffect(() => {
     if (!user) return;
@@ -55,7 +58,17 @@ export function ChatView() {
         <h1 className="text-xl font-headline font-bold text-foreground">
           RealTime Relay
         </h1>
-        <LogoutButton />
+        <div className="flex items-center gap-2">
+            {isAdmin && (
+                <Button asChild variant="outline" size="sm">
+                    <Link href="/admin">
+                        <Shield className="mr-2 h-4 w-4" />
+                        Admin
+                    </Link>
+                </Button>
+            )}
+            <LogoutButton />
+        </div>
       </header>
       <main className="flex-1 overflow-y-auto">
         <MessageList messages={messages} currentUserId={user.uid} />

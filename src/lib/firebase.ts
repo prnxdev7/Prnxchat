@@ -18,4 +18,8 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// NOTE: The user provided password "heyitsprinceverma" is not used here.
+// Firebase client-side SDK does not require passwords for initialization.
+// The user will use this password to log in through the UI.
+
 export { app, auth, db };
