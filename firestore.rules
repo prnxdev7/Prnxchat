@@ -1,0 +1,22 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Chats collection
+    match /chats/{chatId}/messages/{messageId} {
+      // Authenticated users can read messages from any chat
+      allow read: if request.auth != null;
+      
+      // A user can only create a message if they are authenticated and the senderId matches their own UID.
+      // They must also include a text field, their name, and a server timestamp.
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.senderId
+                      && 'text' in request.resource.data && request.resource.data.text is string
+                      && 'senderName' in request.resource.data && request.resource.data.senderName is string
+                      && request.resource.data.timestamp == request.time;
+                      
+      // Users are not allowed to update or delete messages for simplicity.
+      allow update, delete: if false;
+    }
+  }
+}
