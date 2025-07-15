@@ -31,6 +31,7 @@ import {
   SidebarInset,
   SidebarTrigger,
   SidebarSeparator,
+  SidebarFooter,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { User } from 'firebase/auth';
