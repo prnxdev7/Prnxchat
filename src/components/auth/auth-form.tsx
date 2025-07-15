@@ -11,7 +11,8 @@ import {
   signInWithEmailAndPassword,
   updateProfile,
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -65,9 +66,20 @@ export function AuthForm({ type }: AuthFormProps) {
           values.email,
           values.password
         );
+        
+        const displayName = (values as z.infer<typeof signupSchema>).displayName;
         await updateProfile(userCredential.user, {
-          displayName: (values as z.infer<typeof signupSchema>).displayName,
+          displayName: displayName,
         });
+
+        // Create a user document in Firestore
+        await setDoc(doc(db, 'users', userCredential.user.uid), {
+            displayName: displayName,
+            email: values.email,
+            createdAt: serverTimestamp(),
+            online: true, // simplified online status
+        });
+
       } else {
         await signInWithEmailAndPassword(auth, values.email, values.password);
       }

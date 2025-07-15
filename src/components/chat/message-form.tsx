@@ -5,7 +5,7 @@ import { useState, useTransition, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,7 @@ const messageSchema = z.object({
 
 interface MessageFormProps {
   chatId: string;
+  chatType: 'group' | 'private';
 }
 
 // Debounce utility
@@ -43,7 +44,7 @@ const debounce = <F extends (...args: any[]) => any>(func: F, waitFor: number) =
     });
 };
 
-export function MessageForm({ chatId }: MessageFormProps) {
+export function MessageForm({ chatId, chatType }: MessageFormProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
@@ -92,7 +93,22 @@ export function MessageForm({ chatId }: MessageFormProps) {
 
     startTransition(async () => {
       try {
-        const messagesCollection = collection(db, 'chats', chatId, 'messages');
+        const collectionName = chatType === 'group' ? 'chats' : 'privateChats';
+        const messagesCollection = collection(db, collectionName, chatId, 'messages');
+        
+        // If it's a private chat, ensure the chat document exists
+        if(chatType === 'private') {
+            const chatDocRef = doc(db, collectionName, chatId);
+            const chatDoc = await getDoc(chatDocRef);
+            if(!chatDoc.exists()) {
+                const participants = chatId.split('_');
+                await setDoc(chatDocRef, { 
+                    participants: participants,
+                    createdAt: serverTimestamp(),
+                 });
+            }
+        }
+
         await addDoc(messagesCollection, {
           text: values.text,
           senderId: user.uid,
@@ -107,6 +123,7 @@ export function MessageForm({ chatId }: MessageFormProps) {
           title: 'Message Failed',
           description: 'Could not send message. Please try again.',
         });
+        console.error("Message send error:", error);
       }
     });
   }
