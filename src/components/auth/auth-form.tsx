@@ -74,6 +74,7 @@ export function AuthForm({ type }: AuthFormProps) {
 
         // Create a user document in Firestore
         await setDoc(doc(db, 'users', userCredential.user.uid), {
+            uid: userCredential.user.uid,
             displayName: displayName,
             email: values.email,
             createdAt: serverTimestamp(),

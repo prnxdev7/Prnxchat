@@ -17,7 +17,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { MessageList } from './message-list';
 import { MessageForm } from './message-form';
 import { LogoutButton } from '../auth/logout-button';
-import { MessageCircle, Shield, Users } from 'lucide-react';
+import { MessageCircle, Shield, Users, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '../ui/button';
 import {
@@ -34,6 +34,15 @@ import {
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { User } from 'firebase/auth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { SettingsDialog } from '@/components/settings/settings-dialog';
 
 export interface Message {
   id: string;
@@ -69,31 +78,20 @@ export function ChatView() {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [activeChat, setActiveChat] = useState<Chat>({ id: 'general', type: 'group', name: 'General Chat' });
   const isAdmin = user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Fetch all users
   useEffect(() => {
-    const fetchUsers = async () => {
-      const usersCollection = collection(db, 'users');
-      const userSnapshot = await getDocs(usersCollection);
-      const userList = userSnapshot.docs.map(doc => ({ ...doc.data(), uid: doc.id } as AppUser));
-      // Filter out the current user from the list
-      setUsers(userList.filter(u => u.uid !== user?.uid));
+    if (!user) return;
+    const usersCollection = collection(db, 'users');
+    const q = query(usersCollection, where("uid", "!=", user.uid));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const userList = snapshot.docs.map(doc => ({ ...doc.data(), uid: doc.id } as AppUser));
+        setUsers(userList);
+    });
 
-      // Quick implementation to store user data if it doesn't exist
-      if(user) {
-        const userDocRef = doc(db, "users", user.uid);
-        onSnapshot(userDocRef, (doc) => {
-            if (!doc.exists()) {
-                db.collection("users").doc(user.uid).set({
-                    displayName: user.displayName,
-                    email: user.email,
-                    online: true, // Simplified online status
-                })
-            }
-        })
-      }
-    };
-    if(user) fetchUsers();
+    return () => unsubscribe();
   }, [user]);
 
   // Listen for messages in the active chat
@@ -142,16 +140,23 @@ export function ChatView() {
     <SidebarProvider>
         <Sidebar>
             <SidebarHeader>
-                 <div className="flex items-center gap-2">
-                    <Avatar className="h-9 w-9 border">
-                        <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
-                            {user.displayName?.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                        <span className='font-semibold text-foreground text-base'>{user.displayName}</span>
-                        <span className='text-xs text-muted-foreground'>{user.email}</span>
+                 <div className="flex items-center justify-between gap-2">
+                    <div className='flex items-center gap-2'>
+                        <Avatar className="h-9 w-9 border">
+                            <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
+                                {user.displayName?.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col">
+                            <span className='font-semibold text-foreground text-base'>{user.displayName}</span>
+                            <span className='text-xs text-muted-foreground'>{user.email}</span>
+                        </div>
                     </div>
+                    <SettingsDialog>
+                        <Button variant="ghost" size="icon" className='h-8 w-8'>
+                            <Settings className='h-4 w-4'/>
+                        </Button>
+                    </SettingsDialog>
                  </div>
             </SidebarHeader>
             <SidebarContent className="p-2">
@@ -173,7 +178,7 @@ export function ChatView() {
                                             {u.displayName?.charAt(0).toUpperCase()}
                                         </AvatarFallback>
                                     </Avatar>
-                                    <div className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-sidebar" />
+                                    <div className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-card" />
                                 </div>
                                 {u.displayName}
                             </SidebarMenuButton>

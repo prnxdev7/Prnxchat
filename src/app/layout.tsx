@@ -25,7 +25,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body">
-        <Providers>
+        <Providers attribute="class" defaultTheme="system" enableSystem>
           {children}
           <Toaster />
         </Providers>
