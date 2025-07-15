@@ -24,12 +24,13 @@ export default function ChatPage({ params }: { params: { type: string, id: strin
       </div>
     );
   }
+  
+  // Redirect to the main page which now handles chat display
+  router.replace('/');
 
-  if (params.type !== 'group' && params.type !== 'private') {
-    // Or redirect to a 404 page
-    router.replace('/');
-    return null;
-  }
-
-  return <ChatView chatType={params.type as 'group' | 'private'} chatId={params.id} />;
+  return (
+     <div className="flex min-h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+  );
 }
